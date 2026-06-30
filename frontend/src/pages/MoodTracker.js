@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sun, Cloud, CloudRain, CloudLightning, Moon, Send, History, Trash2, Edit3, X, LogIn } from 'lucide-react';
+import { Sun, Cloud, CloudRain, CloudLightning, Moon, Send, History, Trash2, Edit3, X, LogIn, Calendar, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 
 const rawApiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const API_URL = rawApiUrl.endsWith('/') ? rawApiUrl.slice(0, -1) : rawApiUrl;
@@ -17,8 +17,122 @@ const MoodTracker = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [viewPeriod, setViewPeriod] = useState(30);
+  const [viewMode, setViewMode] = useState('calendar');
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [selectedCalendarEntry, setSelectedCalendarEntry] = useState(null);
   const [editingEntry, setEditingEntry] = useState(null);
+
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+
+  const handlePrevMonth = () => {
+    if (currentMonth === 0) {
+      setCurrentMonth(11);
+      setCurrentYear(currentYear - 1);
+    } else {
+      setCurrentMonth(currentMonth - 1);
+    }
+    setSelectedCalendarEntry(null);
+  };
+
+  const handleNextMonth = () => {
+    if (currentMonth === 11) {
+      setCurrentMonth(0);
+      setCurrentYear(currentYear + 1);
+    } else {
+      setCurrentMonth(currentMonth + 1);
+    }
+    setSelectedCalendarEntry(null);
+  };
+
+  const getMoodInsight = () => {
+    if (entries.length === 0) {
+      return {
+        title: "Awaiting Your Input",
+        text: "Log a few daily moods so Mindwell can begin mapping your emotional frequencies and offering specialized wellness guidance."
+      };
+    }
+    
+    const moodCounts = entries.reduce((acc, curr) => {
+      acc[curr.mood] = (acc[curr.mood] || 0) + 1;
+      return acc;
+    }, {});
+    
+    let dominantMood = 'okay';
+    let maxCount = 0;
+    Object.entries(moodCounts).forEach(([mood, count]) => {
+      if (count > maxCount) {
+        maxCount = count;
+        dominantMood = mood;
+      }
+    });
+
+    const total = entries.length;
+    const positiveCount = (moodCounts.excellent || 0) + (moodCounts.good || 0);
+    const positiveRatio = positiveCount / total;
+
+    if (dominantMood === 'excellent' || dominantMood === 'good') {
+      return {
+        title: "Vibrant & Centered",
+        text: `Your dominant energy this month is "${dominantMood.toUpperCase()}". You are maintaining a highly resilient foundation. Remember to anchor these moments of peace to carry you through future tides.`
+      };
+    } else if (dominantMood === 'okay') {
+      return {
+        title: "Balanced & Restorative",
+        text: "Your dominant energy is \"OKAY\". You are in a steady state of recovery. Consider adding brief deep breathing pauses to expand your energy and bring more clarity to your day."
+      };
+    } else {
+      return {
+        title: "Mindful Support Needed",
+        text: `You have logged "${dominantMood.toUpperCase()}" most frequently recently (representing ${Math.round((maxCount/total)*100)}% of entries). This indicates heightened stress. We highly recommend using the 4-4-6 Breathing Guide or taking a restorative nature sound bath.`
+      };
+    }
+  };
+
+  const insight = getMoodInsight();
+
+  const renderCalendarCells = () => {
+    const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+    const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
+    const cells = [];
+
+    // Blank cells
+    for (let i = 0; i < firstDay; i++) {
+      cells.push(<div key={`blank-${i}`} className="h-14 border border-serene-50/50 bg-serene-50/10 rounded-xl" />);
+    }
+
+    // Day cells
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayEntry = entries.find(e => {
+        const d = new Date(e.date);
+        return d.getDate() === day && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      });
+
+      const moodInfo = dayEntry ? moods.find(m => m.value === dayEntry.mood) : null;
+
+      cells.push(
+        <button
+          key={`day-${day}`}
+          type="button"
+          onClick={() => dayEntry && setSelectedCalendarEntry(dayEntry)}
+          className={`h-14 border rounded-xl flex flex-col items-center justify-between p-1.5 transition-all text-xs relative ${
+            moodInfo 
+              ? `bg-gradient-to-br ${moodInfo.color} text-white shadow-sm border-transparent hover:scale-105` 
+              : 'border-serene-100 hover:border-serene-200 text-serene-600 bg-white'
+          }`}
+        >
+          <span className={`font-sans font-bold leading-none ${moodInfo ? 'text-white' : 'text-serene-400'}`}>{day}</span>
+          {moodInfo && <moodInfo.icon size={14} className="opacity-90" />}
+        </button>
+      );
+    }
+
+    return cells;
+  };
 
   const moods = [
     { value: 'excellent', label: 'Excellent', icon: Sun, color: 'from-amber-300 to-orange-400', shadow: 'shadow-amber-200' },
@@ -35,7 +149,7 @@ const MoodTracker = () => {
       
       if (isLoggedIn) {
         const params = { limit: 50, user: user._id };
-        const statsParams = { days: viewPeriod, user: user._id };
+        const statsParams = { days: 30, user: user._id };
 
         const [entriesResponse, statsResponse] = await Promise.all([
           axios.get(`${API_URL}/api/mood`, { params, withCredentials: true }),
@@ -61,7 +175,7 @@ const MoodTracker = () => {
     } finally {
       setLoading(false);
     }
-  }, [viewPeriod, user, isLoggedIn]);
+  }, [user, isLoggedIn]);
 
   useEffect(() => {
     loadMoodData();
@@ -200,6 +314,22 @@ const MoodTracker = () => {
                 </button>
               </form>
             </motion.div>
+
+            {/* Sanctuary Insight Card */}
+            <motion.div 
+              initial={{ x: -30, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              className="bg-white rounded-[3rem] p-8 shadow-xl shadow-serene-900/5 border border-serene-100 mt-6"
+            >
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="p-2.5 bg-serene-50 rounded-xl text-serene-700">
+                  <Sparkles size={20} />
+                </div>
+                <h4 className="font-serif font-bold text-serene-900 text-lg">Sanctuary Insight</h4>
+              </div>
+              <h5 className="font-bold text-sm tracking-wider uppercase text-serene-850 mb-2">{insight.title}</h5>
+              <p className="text-xs leading-relaxed text-serene-600 italic">{insight.text}</p>
+            </motion.div>
           </div>
 
           {/* History & Stats Content */}
@@ -236,60 +366,117 @@ const MoodTracker = () => {
               </motion.div>
             )}
 
-            {/* Recent Entries */}
-            <div className="bg-white rounded-[3rem] p-8 shadow-xl shadow-serene-900/5 border border-serene-100 min-h-[500px]">
-              <div className="flex justify-between items-center mb-8">
-                <h3 className="text-2xl font-serif font-bold text-serene-900">Atmosphere History</h3>
-                <History className="text-serene-300" />
-              </div>
+            {/* History & Calendar Card */}
+            <div className="bg-white rounded-[3rem] p-8 shadow-xl shadow-serene-900/5 border border-serene-100 min-h-[550px] flex flex-col justify-between">
+              <div>
+                <div className="flex justify-between items-center mb-8 border-b border-serene-100 pb-4">
+                  <h3 className="text-2xl font-serif font-bold text-serene-900">
+                    {viewMode === 'calendar' ? 'Monthly Aura Grid' : 'Atmosphere History'}
+                  </h3>
+                  <div className="flex space-x-2 bg-serene-50 p-1 rounded-xl">
+                    <button
+                      onClick={() => setViewMode('list')}
+                      className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow text-serene-850' : 'text-serene-400 hover:text-serene-700'}`}
+                    >
+                      <History size={16} className="inline mr-1" /> List
+                    </button>
+                    <button
+                      onClick={() => setViewMode('calendar')}
+                      className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${viewMode === 'calendar' ? 'bg-white shadow text-serene-850' : 'text-serene-400 hover:text-serene-700'}`}
+                    >
+                      <Calendar size={16} className="inline mr-1" /> Calendar
+                    </button>
+                  </div>
+                </div>
 
-              <div className="space-y-4">
-                <AnimatePresence mode="popLayout">
-                  {entries.length === 0 ? (
-                    <div className="text-center py-20">
-                      <div className="w-20 h-20 bg-serene-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-serene-200">
-                        <Moon size={40} />
-                      </div>
-                      <p className="text-serene-400 italic">No energy logged yet.</p>
-                    </div>
-                  ) : (
-                    entries.map((entry) => {
-                      const moodInfo = moods.find(m => m.value === entry.mood) || moods[2];
-                      return (
-                        <motion.div
-                          key={entry._id}
-                          initial={{ scale: 0.9, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          exit={{ scale: 0.8, opacity: 0 }}
-                          className="group p-6 bg-serene-50/50 rounded-[2rem] border border-serene-100 hover:bg-white hover:shadow-lg transition-all"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-start space-x-6">
-                              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${moodInfo.color} text-white flex items-center justify-center shadow-lg`}>
-                                <moodInfo.icon size={24} />
-                              </div>
-                              <div>
-                                <div className="flex items-center space-x-3 mb-2">
-                                  <span className="text-sm font-bold text-serene-900 uppercase tracking-widest">{entry.mood}</span>
-                                  <span className="text-xs text-serene-400">
-                                    {new Date(entry.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                  </span>
-                                </div>
-                                <p className="text-serene-700 leading-relaxed italic">{entry.note || "No reflection added."}</p>
-                              </div>
-                            </div>
-                            <button 
-                              onClick={() => deleteEntry(entry._id)}
-                              className="p-2 text-serene-200 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
-                            >
-                              <Trash2 size={18} />
-                            </button>
+                {viewMode === 'list' ? (
+                  <div className="space-y-4">
+                    <AnimatePresence mode="popLayout">
+                      {entries.length === 0 ? (
+                        <div className="text-center py-20">
+                          <div className="w-20 h-20 bg-serene-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-serene-200">
+                            <Moon size={40} />
                           </div>
-                        </motion.div>
-                      );
-                    })
-                  )}
-                </AnimatePresence>
+                          <p className="text-serene-400 italic">No energy logged yet.</p>
+                        </div>
+                      ) : (
+                        entries.map((entry) => {
+                          const moodInfo = moods.find(m => m.value === entry.mood) || moods[2];
+                          return (
+                            <motion.div
+                              key={entry._id}
+                              initial={{ scale: 0.9, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              exit={{ scale: 0.8, opacity: 0 }}
+                              className="group p-6 bg-serene-50/50 rounded-[2rem] border border-serene-100 hover:bg-white hover:shadow-lg transition-all"
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start space-x-6">
+                                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${moodInfo.color} text-white flex items-center justify-center shadow-lg`}>
+                                    <moodInfo.icon size={24} />
+                                  </div>
+                                  <div>
+                                    <div className="flex items-center space-x-3 mb-2">
+                                      <span className="text-sm font-bold text-serene-900 uppercase tracking-widest">{entry.mood}</span>
+                                      <span className="text-xs text-serene-400">
+                                        {new Date(entry.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                      </span>
+                                    </div>
+                                    <p className="text-serene-700 leading-relaxed italic">{entry.note || "No reflection added."}</p>
+                                  </div>
+                                </div>
+                                <button 
+                                  onClick={() => deleteEntry(entry._id)}
+                                  className="p-2 text-serene-200 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                                >
+                                  <Trash2 size={18} />
+                                </button>
+                              </div>
+                            </motion.div>
+                          );
+                        })
+                      )}
+                    </AnimatePresence>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between px-2">
+                      <button onClick={handlePrevMonth} className="p-2 text-serene-500 hover:text-serene-850 hover:bg-serene-50 rounded-xl transition-all">
+                        <ChevronLeft size={20} />
+                      </button>
+                      <h4 className="font-serif font-bold text-serene-900 text-lg">
+                        {monthNames[currentMonth]} {currentYear}
+                      </h4>
+                      <button onClick={handleNextMonth} className="p-2 text-serene-500 hover:text-serene-850 hover:bg-serene-50 rounded-xl transition-all">
+                        <ChevronRight size={20} />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-2 text-center text-[10px] font-bold text-serene-300 uppercase tracking-wider mb-2">
+                      {daysOfWeek.map(d => <div key={d}>{d}</div>)}
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-2">
+                      {renderCalendarCells()}
+                    </div>
+
+                    {selectedCalendarEntry && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-6 p-6 bg-serene-50/50 border border-serene-100 rounded-3xl"
+                      >
+                        <div className="flex justify-between items-center mb-2 border-b border-serene-100 pb-2">
+                          <span className="text-[10px] font-bold text-serene-800 uppercase tracking-widest">
+                            {selectedCalendarEntry.mood} energy on {new Date(selectedCalendarEntry.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+                          </span>
+                          <button onClick={() => setSelectedCalendarEntry(null)} className="text-[10px] font-bold text-red-400 hover:text-red-600">Close</button>
+                        </div>
+                        <p className="text-xs italic text-serene-700 leading-relaxed">"{selectedCalendarEntry.note || "No reflection added."}"</p>
+                      </motion.div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>

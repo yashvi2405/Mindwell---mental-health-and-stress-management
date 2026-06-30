@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Wind, Music, BookOpen, Play, Pause, Timer, Sparkles, Send, LogIn, CloudRain, Sun } from 'lucide-react';
+import { Wind, Music, BookOpen, Play, Pause, Timer, Sparkles, Send, LogIn, CloudRain, Sun, Edit3, Trash2, CheckSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const rawApiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -96,26 +96,120 @@ const StressManagement = () => {
     if (activeTab === 'journal') loadJournalEntries();
   }, [activeTab, loadJournalEntries]);
 
+  const [editingJournalId, setEditingJournalId] = useState(null);
+  const [goals, setGoals] = useState([]);
+  const [newGoalText, setNewGoalText] = useState('');
+  const [customMusicUrl, setCustomMusicUrl] = useState('');
+  const [embeddedPlayer, setEmbeddedPlayer] = useState(null);
+
+  // Load goals on mount
+  useEffect(() => {
+    const savedGoals = JSON.parse(localStorage.getItem('mindwell_goals') || '[]');
+    setGoals(savedGoals);
+  }, []);
+
+  const handleEmbedMusic = () => {
+    if (!customMusicUrl.trim()) return;
+    let ytId = '';
+    if (customMusicUrl.includes('youtube.com/watch')) {
+      const urlParams = new URLSearchParams(new URL(customMusicUrl).search);
+      ytId = urlParams.get('v');
+    } else if (customMusicUrl.includes('youtu.be/')) {
+      ytId = customMusicUrl.split('youtu.be/')[1]?.split('?')[0];
+    }
+    if (ytId) {
+      setEmbeddedPlayer({ type: 'youtube', id: ytId });
+      setCustomMusicUrl('');
+      return;
+    }
+    if (customMusicUrl.includes('open.spotify.com/')) {
+      const parts = customMusicUrl.split('open.spotify.com/')[1]?.split('?')[0];
+      if (parts) {
+        setEmbeddedPlayer({ type: 'spotify', path: parts });
+        setCustomMusicUrl('');
+        return;
+      }
+    }
+    alert('Please enter a valid YouTube video or Spotify playlist/track link.');
+  };
+
+  const addGoal = (e) => {
+    e.preventDefault();
+    if (!newGoalText.trim()) return;
+    const goal = {
+      id: Date.now(),
+      text: newGoalText.trim(),
+      completed: false
+    };
+    const updated = [...goals, goal];
+    setGoals(updated);
+    localStorage.setItem('mindwell_goals', JSON.stringify(updated));
+    setNewGoalText('');
+  };
+
+  const toggleGoal = (id) => {
+    const updated = goals.map(g => g.id === id ? { ...g, completed: !g.completed } : g);
+    setGoals(updated);
+    localStorage.setItem('mindwell_goals', JSON.stringify(updated));
+  };
+
+  const deleteGoal = (id) => {
+    const updated = goals.filter(g => g.id !== id);
+    setGoals(updated);
+    localStorage.setItem('mindwell_goals', JSON.stringify(updated));
+  };
+
   const saveJournal = async () => {
     if (!journalEntry.trim()) return;
     try {
       setLoading(true);
-      const newEntry = {
-        _id: `local_${Date.now()}`,
-        content: journalEntry,
-        date: new Date().toISOString()
-      };
-      if (isLoggedIn) {
-        const response = await axios.post(`${API_URL}/api/journal`, { content: journalEntry, user: user._id }, { withCredentials: true });
-        setSavedEntries([response.data, ...savedEntries]);
+      if (editingJournalId) {
+        if (isLoggedIn) {
+          const response = await axios.put(`${API_URL}/api/journal/${editingJournalId}`, { content: journalEntry }, { withCredentials: true });
+          setSavedEntries(savedEntries.map(e => e._id === editingJournalId ? response.data : e));
+        } else {
+          const updated = savedEntries.map(e => e._id === editingJournalId ? { ...e, content: journalEntry } : e);
+          localStorage.setItem('mindwell_journals', JSON.stringify(updated));
+          setSavedEntries(updated);
+        }
+        setEditingJournalId(null);
       } else {
-        const updated = [newEntry, ...savedEntries];
-        localStorage.setItem('mindwell_journals', JSON.stringify(updated));
-        setSavedEntries(updated);
+        const newEntry = {
+          _id: `local_${Date.now()}`,
+          content: journalEntry,
+          date: new Date().toISOString()
+        };
+        if (isLoggedIn) {
+          const response = await axios.post(`${API_URL}/api/journal`, { content: journalEntry, user: user._id }, { withCredentials: true });
+          setSavedEntries([response.data, ...savedEntries]);
+        } else {
+          const updated = [newEntry, ...savedEntries];
+          localStorage.setItem('mindwell_journals', JSON.stringify(updated));
+          setSavedEntries(updated);
+        }
       }
       setJournalEntry('');
     } catch (err) {
       setError('Failed to save journal');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteJournal = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this reflection?')) return;
+    try {
+      setLoading(true);
+      if (isLoggedIn && !id.toString().startsWith('local_')) {
+        await axios.delete(`${API_URL}/api/journal/${id}`, { withCredentials: true });
+      }
+      const updated = savedEntries.filter(e => e._id !== id);
+      if (!isLoggedIn || id.toString().startsWith('local_')) {
+        localStorage.setItem('mindwell_journals', JSON.stringify(updated));
+      }
+      setSavedEntries(updated);
+    } catch (err) {
+      setError('Failed to delete journal');
     } finally {
       setLoading(false);
     }
@@ -172,6 +266,7 @@ const StressManagement = () => {
               { id: 'meditation', name: 'Sounds', icon: Music },
               { id: 'breathing', name: 'Breathing', icon: Wind },
               { id: 'journal', name: 'Journal', icon: BookOpen },
+              { id: 'focus', name: 'Goals', icon: CheckSquare },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -221,6 +316,59 @@ const StressManagement = () => {
                           <p className="font-serif font-bold text-serene-900 group-hover:text-serene-700 transition-colors">{sound.name}</p>
                         </button>
                       ))}
+                    </div>
+
+                    {/* Connect Your Own Music */}
+                    <div className="mt-8 pt-8 border-t border-serene-100 space-y-4">
+                      <div>
+                        <h4 className="font-serif font-bold text-serene-900 text-lg">Personal soundscape</h4>
+                        <p className="text-xs text-serene-400">Paste any YouTube or Spotify link to play your own custom relaxation tracks.</p>
+                      </div>
+                      <div className="flex space-x-2">
+                        <input
+                          type="text"
+                          placeholder="https://www.youtube.com/watch?v=... or Spotify link"
+                          value={customMusicUrl}
+                          onChange={(e) => setCustomMusicUrl(e.target.value)}
+                          className="flex-1 px-4 py-3 bg-serene-50 border border-serene-100 rounded-2xl text-xs focus:ring-4 focus:ring-serene-500/10 text-serene-850 placeholder-serene-300"
+                        />
+                        <button
+                          onClick={handleEmbedMusic}
+                          className="px-4 py-3 bg-serene-700 hover:bg-serene-850 text-white rounded-2xl text-xs font-bold shadow-md transition-all active:scale-95"
+                        >
+                          Embed
+                        </button>
+                      </div>
+
+                      {embeddedPlayer && (
+                        <motion.div 
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="rounded-3xl overflow-hidden bg-serene-50/50 p-2 border border-serene-100 shadow-inner mt-4"
+                        >
+                          <div className="flex justify-between items-center px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-serene-400">
+                            <span>sanctuary custom stream</span>
+                            <button onClick={() => setEmbeddedPlayer(null)} className="text-red-400 hover:text-red-600 font-bold">Remove</button>
+                          </div>
+                          {embeddedPlayer.type === 'youtube' ? (
+                            <iframe
+                              title="YouTube Custom Music"
+                              src={`https://www.youtube.com/embed/${embeddedPlayer.id}`}
+                              className="w-full h-44 rounded-2xl border-none"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                            />
+                          ) : (
+                            <iframe
+                              title="Spotify Custom Music"
+                              src={`https://open.spotify.com/embed/${embeddedPlayer.path}`}
+                              className="w-full h-80 rounded-2xl border-none"
+                              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                              loading="lazy"
+                            />
+                          )}
+                        </motion.div>
+                      )}
                     </div>
                   </div>
 
@@ -305,16 +453,24 @@ const StressManagement = () => {
                     <textarea
                       value={journalEntry}
                       onChange={(e) => setJournalEntry(e.target.value)}
-                      placeholder="What is the color of your mind right now?"
+                      placeholder={editingJournalId ? "Editing your reflection..." : "What is the color of your mind right now?"}
                       className="w-full p-10 bg-serene-50/50 border-none rounded-[3rem] focus:ring-4 focus:ring-serene-500/10 min-h-[350px] text-serene-800 placeholder-serene-300 transition-all text-xl italic leading-relaxed"
                     />
                     <button
                       onClick={saveJournal}
                       disabled={!journalEntry.trim() || loading}
-                      className="absolute bottom-8 right-8 p-5 bg-serene-700 text-white rounded-[1.5rem] hover:bg-serene-850 shadow-2xl transition-all active:scale-90 disabled:bg-serene-200"
+                      className="absolute bottom-8 right-8 p-5 bg-serene-700 text-white rounded-[1.5rem] hover:bg-serene-850 shadow-2xl transition-all active:scale-90 disabled:bg-serene-200 flex items-center justify-center"
                     >
-                      <Send size={28} />
+                      {editingJournalId ? <Sparkles size={28} /> : <Send size={28} />}
                     </button>
+                    {editingJournalId && (
+                      <button
+                        onClick={() => { setJournalEntry(''); setEditingJournalId(null); }}
+                        className="absolute bottom-8 right-24 px-4 py-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all text-xs font-bold shadow-md"
+                      >
+                        Cancel
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -334,11 +490,92 @@ const StressManagement = () => {
                             className="p-8 bg-serene-50/30 rounded-[2.5rem] border border-serene-100 hover:bg-white transition-all shadow-sm group hover:shadow-md"
                           >
                             <p className="text-serene-700 leading-relaxed italic mb-6 line-clamp-4">{e.content}</p>
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between border-t border-serene-50 pt-4">
                               <span className="text-[10px] font-bold text-serene-400 uppercase tracking-widest">
                                 {new Date(e.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
                               </span>
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => { setJournalEntry(e.content); setEditingJournalId(e._id); }}
+                                  className="p-2 text-serene-300 hover:text-serene-600 transition-colors"
+                                  title="Edit entry"
+                                >
+                                  <Edit3 size={16} />
+                                </button>
+                                <button
+                                  onClick={() => deleteJournal(e._id)}
+                                  className="p-2 text-serene-300 hover:text-red-500 transition-colors"
+                                  title="Delete entry"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
                             </div>
+                          </motion.div>
+                        ))
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'focus' && (
+              <div className="space-y-12 max-w-xl mx-auto">
+                <div className="bg-white rounded-[3rem] p-10 shadow-xl shadow-serene-900/5 border border-serene-100">
+                  <div className="flex items-center justify-between mb-8">
+                    <h2 className="text-3xl font-serif font-bold text-serene-900">Mindful Goals</h2>
+                    <CheckSquare className="text-serene-300" />
+                  </div>
+                  <p className="text-serene-600 leading-relaxed text-sm mb-8">Set small, restorative actions to soothe anxiety and restore focus.</p>
+
+                  <form onSubmit={addGoal} className="flex space-x-3 mb-8">
+                    <input
+                      type="text"
+                      placeholder="Add a mindful goal (e.g. 5m breathing)"
+                      value={newGoalText}
+                      onChange={(e) => setNewGoalText(e.target.value)}
+                      className="flex-1 px-4 py-4 bg-serene-50/50 border border-serene-100 rounded-2xl text-sm focus:ring-4 focus:ring-serene-500/10 text-serene-850 placeholder-serene-300"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!newGoalText.trim()}
+                      className="px-6 py-4 bg-serene-700 hover:bg-serene-850 text-white rounded-2xl text-sm font-bold shadow-md transition-all active:scale-95 disabled:bg-serene-200"
+                    >
+                      Add
+                    </button>
+                  </form>
+
+                  <div className="space-y-3">
+                    <AnimatePresence>
+                      {goals.length === 0 ? (
+                        <div className="text-center py-10 text-serene-400 italic text-sm">No goals set for today. Add one above!</div>
+                      ) : (
+                        goals.map((g) => (
+                          <motion.div
+                            key={g.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="flex items-center justify-between p-4 bg-serene-50/30 rounded-2xl border border-serene-100 hover:bg-white transition-all shadow-sm"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <input
+                                type="checkbox"
+                                checked={g.completed}
+                                onChange={() => toggleGoal(g.id)}
+                                className="w-5 h-5 rounded border-serene-200 text-serene-750 focus:ring-serene-500/10 cursor-pointer"
+                              />
+                              <span className={`text-sm text-serene-850 transition-all ${g.completed ? 'line-through text-serene-400 italic' : ''}`}>
+                                {g.text}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => deleteGoal(g.id)}
+                              className="text-serene-300 hover:text-red-500 transition-colors p-1"
+                            >
+                              <Trash2 size={16} />
+                            </button>
                           </motion.div>
                         ))
                       )}

@@ -13,6 +13,8 @@ import Chatbot from './pages/Chatbot';
 import About from './pages/About';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
+import Community from './pages/Community';
+import Contact from './pages/Contact';
 import './App.css';
 
 function App() {
@@ -31,6 +33,8 @@ function App() {
               <Route path="/assessment" element={<Assessment />} />
               <Route path="/stress-management" element={<StressManagement />} />
               <Route path="/mood-tracker" element={<MoodTracker />} />
+              <Route path="/community" element={<Community />} />
+              <Route path="/contact" element={<Contact />} />
               
               {/* Protected Routes */}
               <Route

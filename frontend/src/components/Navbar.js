@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../utils/api';
-import { Menu, X, User, LogOut, Heart, Activity, Wind, BarChart3, MessageCircle, Info } from 'lucide-react';
+import { Menu, X, User, LogOut, Heart, Activity, Wind, BarChart3, MessageCircle, Info, Users, Phone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar = () => {
@@ -38,6 +38,8 @@ const Navbar = () => {
     { path: '/assessment', name: 'Assessment', icon: Activity },
     { path: '/stress-management', name: 'Stress', icon: Wind },
     { path: '/mood-tracker', name: 'Mood', icon: BarChart3 },
+    { path: '/community', name: 'Community', icon: Users },
+    { path: '/contact', name: 'Therapist', icon: Phone },
     { path: '/chatbot', name: 'Chat', icon: MessageCircle },
     { path: '/about', name: 'About', icon: Info },
   ];

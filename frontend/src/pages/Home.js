@@ -1,10 +1,96 @@
 // pages/Home.js
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Heart, Activity, Wind, BarChart3, MessageCircle, ArrowRight, Shield, Globe, Award } from 'lucide-react';
+import { Heart, Activity, Wind, BarChart3, MessageCircle, ArrowRight, Shield, Globe, Award, Sparkles } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
+
+const rawApiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = rawApiUrl.endsWith('/') ? rawApiUrl.slice(0, -1) : rawApiUrl;
 
 const Home = () => {
+  const { user, isLoggedIn } = useAuth();
+  const [unlockedCount, setUnlockedCount] = useState(0);
+  const getDailyAffirmation = () => {
+    const affirmations = [
+      "I am worthy of peace, rest, and calm today.",
+      "I choose to inhale confidence and exhale doubt.",
+      "My mind is calm, my heart is light, my path is clear.",
+      "I am allowed to take things one breath at a time.",
+      "I bring value, love, and light to the world around me.",
+      "I am proud of my progress, no matter how small.",
+      "My strength is greater than any passing anxiety.",
+      "I give myself grace and permission to slow down.",
+      "I choose to focus on what I can control and release the rest.",
+      "My presence is a gift to those who love me.",
+      "I am doing the best I can, and that is enough.",
+      "I release yesterday's weight and step into today's light.",
+      "I choose to feed my mind with positive intentions.",
+      "I am safe, I am grounded, and I am in my center.",
+      "My body knows how to heal and return to balance.",
+      "I cultivate peace within myself first.",
+      "Every breath brings me closer to quiet resilience.",
+      "I release the need to be perfect; I choose to be present.",
+      "I am the architect of my peace; I build a strong foundation.",
+      "I choose kindness toward my own thoughts.",
+      "I respect my boundaries and honor my feelings.",
+      "I am capable of navigating change with grace.",
+      "I am anchored in the beauty of the present moment.",
+      "My mind is a sanctuary for calm and positive thoughts.",
+      "I choose to act with courage and speak with love.",
+      "I am resilient, I am strong, and I am growing.",
+      "I trust the timing of my life's journey.",
+      "I am open to receiving peace and happiness today.",
+      "My heart is full of gratitude for the simple things.",
+      "I step forward with hope and quiet confidence.",
+      "I choose to let go of expectations and embrace reality."
+    ];
+    const day = new Date().getDate();
+    return affirmations[day % affirmations.length];
+  };
+
+  useEffect(() => {
+    const calculateMilestones = async () => {
+      try {
+        let moodCount = 0;
+        let journalCount = 0;
+        let completedGoalsCount = 0;
+
+        if (isLoggedIn && user) {
+          const params = { user: user._id };
+          const [moodsRes, journalsRes] = await Promise.all([
+            axios.get(`${API_URL}/api/mood`, { params, withCredentials: true }),
+            axios.get(`${API_URL}/api/journal`, { params, withCredentials: true })
+          ]);
+          moodCount = moodsRes.data.length;
+          journalCount = journalsRes.data.length;
+        } else {
+          const moodsLocal = JSON.parse(localStorage.getItem('mindwell_moods') || '[]');
+          const journalsLocal = JSON.parse(localStorage.getItem('mindwell_journals') || '[]');
+          moodCount = moodsLocal.length;
+          journalCount = journalsLocal.length;
+        }
+
+        const goalsLocal = JSON.parse(localStorage.getItem('mindwell_goals') || '[]');
+        completedGoalsCount = goalsLocal.filter(g => g.completed).length;
+
+        let count = 0;
+        if (moodCount >= 1) count++; // First Light
+        if (moodCount >= 5) count++; // Inner Awareness
+        if (journalCount >= 1) count++; // Reflection Explorer
+        if (journalCount >= 5) count++; // Mindfulness Anchor
+        if (completedGoalsCount >= 3) count++; // Focused Intent
+
+        setUnlockedCount(count);
+      } catch (err) {
+        console.error('Error calculating milestones:', err);
+      }
+    };
+
+    calculateMilestones();
+  }, [isLoggedIn, user]);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 
@@ -116,6 +202,54 @@ const Home = () => {
                 <p className="text-sm font-serif font-bold text-serene-850">Calming Active</p>
               </div>
             </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Daily Reflection & Milestones Dashboard */}
+      <section className="py-16 bg-serene-50/50 border-y border-serene-100/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+            {/* Daily Affirmation Card */}
+            <div className="lg:col-span-7 bg-white rounded-[3.5rem] p-10 shadow-xl shadow-serene-900/5 border border-serene-100 flex flex-col justify-between min-h-[250px]">
+              <div>
+                <span className="inline-block px-3 py-1 bg-serene-50 text-serene-700 rounded-full text-[10px] font-bold tracking-widest uppercase mb-4">
+                  Daily Affirmation
+                </span>
+                <p className="text-2xl font-serif font-bold text-serene-900 italic leading-relaxed mb-6">
+                  "{getDailyAffirmation()}"
+                </p>
+              </div>
+              <p className="text-xs text-serene-400">
+                A new intention is set for you every single day. Carry this peace into your actions.
+              </p>
+            </div>
+
+            {/* Mindfulness Milestones Widget */}
+            <div className="lg:col-span-5 bg-white rounded-[3.5rem] p-10 shadow-xl shadow-serene-900/5 border border-serene-100 flex flex-col justify-between min-h-[250px]">
+              <div>
+                <h3 className="text-2xl font-serif font-bold text-serene-900 mb-2">Mindful Progress</h3>
+                <p className="text-xs text-serene-500 mb-6">Unlocking milestones through daily reflection practices.</p>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-xs font-bold text-serene-700 mb-1">
+                      <span>Milestones Unlocked</span>
+                      <span>{unlockedCount} / 5</span>
+                    </div>
+                    <div className="w-full h-2.5 bg-serene-50 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-serene-700 transition-all duration-500" 
+                        style={{ width: `${(unlockedCount / 5) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <Link to="/profile" className="flex items-center space-x-2 text-xs font-bold text-serene-850 hover:underline uppercase tracking-widest mt-6">
+                <span>View Badges</span>
+                <ArrowRight size={14} />
+              </Link>
+            </div>
           </div>
         </div>
       </section>

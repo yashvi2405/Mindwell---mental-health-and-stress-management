@@ -2,11 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Mail, Shield, Check, AlertCircle, Save, LogOut } from 'lucide-react';
+import { User, Mail, Shield, Check, AlertCircle, Save, LogOut, Sparkles, Heart, BookOpen, Award, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
+const rawApiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = rawApiUrl.endsWith('/') ? rawApiUrl.slice(0, -1) : rawApiUrl;
 
 const Profile = () => {
-  const { user, updateUser, logout } = useAuth();
+  const { user, isLoggedIn, updateUser, logout } = useAuth();
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [password, setPassword] = useState('');
@@ -16,12 +20,94 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const [moodCount, setMoodCount] = useState(0);
+  const [journalCount, setJournalCount] = useState(0);
+  const [completedGoalsCount, setCompletedGoalsCount] = useState(0);
+
   useEffect(() => {
     if (user) {
       setName(user.name);
       setEmail(user.email);
     }
   }, [user]);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        let mc = 0;
+        let jc = 0;
+
+        if (isLoggedIn && user) {
+          const params = { user: user._id };
+          const [moodsRes, journalsRes] = await Promise.all([
+            axios.get(`${API_URL}/api/mood`, { params, withCredentials: true }),
+            axios.get(`${API_URL}/api/journal`, { params, withCredentials: true })
+          ]);
+          mc = moodsRes.data.length;
+          jc = journalsRes.data.length;
+        } else {
+          const moodsLocal = JSON.parse(localStorage.getItem('mindwell_moods') || '[]');
+          const journalsLocal = JSON.parse(localStorage.getItem('mindwell_journals') || '[]');
+          mc = moodsLocal.length;
+          jc = journalsLocal.length;
+        }
+
+        const goalsLocal = JSON.parse(localStorage.getItem('mindwell_goals') || '[]');
+        const cgc = goalsLocal.filter(g => g.completed).length;
+
+        setMoodCount(mc);
+        setJournalCount(jc);
+        setCompletedGoalsCount(cgc);
+      } catch (err) {
+        console.error('Error fetching data for badges:', err);
+      }
+    };
+
+    fetchUserData();
+  }, [isLoggedIn, user]);
+
+  const badgesList = [
+    {
+      id: 'first_mood',
+      name: 'First Light',
+      description: 'Log your first daily energy state.',
+      icon: Sparkles,
+      unlocked: moodCount >= 1,
+      requirement: '1 Mood Entry'
+    },
+    {
+      id: 'five_moods',
+      name: 'Inner Awareness',
+      description: 'Observe patterns across 5 logs.',
+      icon: Heart,
+      unlocked: moodCount >= 5,
+      requirement: '5 Mood Entries'
+    },
+    {
+      id: 'first_journal',
+      name: 'Reflection Explorer',
+      description: 'Write your first journal reflection.',
+      icon: BookOpen,
+      unlocked: journalCount >= 1,
+      requirement: '1 Journal Entry'
+    },
+    {
+      id: 'five_journals',
+      name: 'Focus Anchor',
+      description: 'Commit your thoughts to 5 entries.',
+      icon: Shield,
+      unlocked: journalCount >= 5,
+      requirement: '5 Journal Entries'
+    },
+    {
+      id: 'three_goals',
+      name: 'Focused Intent',
+      description: 'Complete 3 daily mindful tasks.',
+      icon: Award,
+      unlocked: completedGoalsCount >= 3,
+      requirement: '3 Mindful Goals'
+    }
+  ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -185,6 +271,51 @@ const Profile = () => {
               </button>
             </div>
           </form>
+        </motion.div>
+
+        {/* Milestones & Badges section */}
+        <motion.div 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white rounded-[3rem] p-10 shadow-2xl shadow-serene-900/5 border border-serene-100 mt-8"
+        >
+          <div className="mb-8">
+            <h2 className="text-3xl font-serif font-bold text-serene-900 mb-2">Tranquility Milestones</h2>
+            <p className="text-serene-600 text-sm">Your unlocked mindfulness certifications and wellness markers.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {badgesList.map((badge) => (
+              <div 
+                key={badge.id}
+                className={`p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col items-center text-center ${
+                  badge.unlocked 
+                    ? 'bg-serene-50/50 border-serene-200/60 shadow-md shadow-serene-100/50 scale-100'
+                    : 'bg-white border-serene-100 opacity-60'
+                }`}
+              >
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 shadow-sm ${
+                  badge.unlocked 
+                    ? 'bg-serene-700 text-white' 
+                    : 'bg-serene-50 text-serene-300'
+                }`}>
+                  {badge.unlocked ? <badge.icon size={26} /> : <Lock size={22} />}
+                </div>
+
+                <h4 className="font-serif font-bold text-serene-900 mb-1">{badge.name}</h4>
+                <p className="text-xs text-serene-500 leading-relaxed mb-4">{badge.description}</p>
+                
+                <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full ${
+                  badge.unlocked 
+                    ? 'bg-serene-200/50 text-serene-800' 
+                    : 'bg-serene-50 text-serene-400'
+                }`}>
+                  {badge.unlocked ? 'Unlocked' : badge.requirement}
+                </span>
+              </div>
+            ))}
+          </div>
         </motion.div>
 
         {/* Support Link */}

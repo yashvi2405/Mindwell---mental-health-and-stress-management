@@ -17,6 +17,7 @@ const authUser = asyncHandler(async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      role: user.role,
     });
   } else {
     res.status(401);
@@ -28,7 +29,7 @@ const authUser = asyncHandler(async (req, res) => {
 // @route   POST /api/users
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, role, title, bio, specialties, availability, photo } = req.body;
 
   const userExists = await User.findOne({ email });
 
@@ -41,6 +42,12 @@ const registerUser = asyncHandler(async (req, res) => {
     name,
     email,
     password,
+    role: role || 'user',
+    title,
+    bio,
+    specialties: specialties ? (Array.isArray(specialties) ? specialties : specialties.split(',').map(s => s.trim())) : [],
+    availability,
+    photo
   });
 
   if (user) {
@@ -50,6 +57,7 @@ const registerUser = asyncHandler(async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      role: user.role,
     });
   } else {
     res.status(400);
@@ -79,6 +87,12 @@ const getUserProfile = asyncHandler(async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      role: user.role,
+      title: user.title,
+      bio: user.bio,
+      specialties: user.specialties,
+      availability: user.availability,
+      photo: user.photo,
     });
   } else {
     res.status(404);
@@ -95,6 +109,16 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   if (user) {
     user.name = req.body.name || user.name;
     user.email = req.body.email || user.email;
+    
+    if (req.body.title !== undefined) user.title = req.body.title;
+    if (req.body.bio !== undefined) user.bio = req.body.bio;
+    if (req.body.specialties !== undefined) {
+      user.specialties = Array.isArray(req.body.specialties) 
+        ? req.body.specialties 
+        : req.body.specialties.split(',').map(s => s.trim());
+    }
+    if (req.body.availability !== undefined) user.availability = req.body.availability;
+    if (req.body.photo !== undefined) user.photo = req.body.photo;
 
     if (req.body.password) {
       user.password = req.body.password;
@@ -106,11 +130,25 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       _id: updatedUser._id,
       name: updatedUser.name,
       email: updatedUser.email,
+      role: updatedUser.role,
+      title: updatedUser.title,
+      bio: updatedUser.bio,
+      specialties: updatedUser.specialties,
+      availability: updatedUser.availability,
+      photo: updatedUser.photo,
     });
   } else {
     res.status(404);
     throw new Error('User not found');
   }
+});
+
+// @desc    Get all therapists
+// @route   GET /api/users/therapists
+// @access  Public
+const getTherapists = asyncHandler(async (req, res) => {
+  const therapists = await User.find({ role: 'therapist' }).select('-password');
+  res.json(therapists);
 });
 export {
   authUser,
@@ -118,4 +156,5 @@ export {
   logoutUser,
   getUserProfile,
   updateUserProfile,
+  getTherapists,
 };

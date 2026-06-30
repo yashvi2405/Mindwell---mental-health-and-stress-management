@@ -10,6 +10,7 @@ import userRoutes from './routes/userRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import journalRoutes from './routes/journalRoutes.js';
 import moodRoutes from './routes/moodRoutes.js';
+import postRoutes from './routes/postRoutes.js';
 
 const port = process.env.PORT || 5000;
 const app = express();
@@ -61,6 +62,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/journal', journalRoutes);
 app.use('/api/mood', moodRoutes);
+app.use('/api/posts', postRoutes);
 
 // Error Handling
 app.use(notFound);

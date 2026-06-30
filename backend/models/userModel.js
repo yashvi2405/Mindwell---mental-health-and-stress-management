@@ -16,6 +16,26 @@ const userSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    role: {
+      type: String,
+      default: 'user', // 'user', 'therapist', 'admin'
+    },
+    title: {
+      type: String,
+    },
+    bio: {
+      type: String,
+    },
+    specialties: [{
+      type: String,
+    }],
+    availability: {
+      type: String,
+    },
+    photo: {
+      type: String,
+      default: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=300',
+    },
   },
   {
     timestamps: true,
