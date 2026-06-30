@@ -5,7 +5,8 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sun, Cloud, CloudRain, CloudLightning, Moon, Send, History, Trash2, Edit3, X, LogIn } from 'lucide-react';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const rawApiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = rawApiUrl.endsWith('/') ? rawApiUrl.slice(0, -1) : rawApiUrl;
 
 const MoodTracker = () => {
   const { user, isLoggedIn } = useAuth();
