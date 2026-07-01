@@ -2,17 +2,25 @@
 
 Mindwell is a premium, beautifully designed digital sanctuary for mental wellness and emotional calibration. Grounded in evidence-based observation tools and styled with a serene, organic sage green and cream aesthetic, it provides users with a comprehensive set of resources to track their emotional state, manage daily stress, and receive mindful guidance.
 
-## Key Features
+## Premium Sanctuary Features
 
+### 🌟 Personal Growth & Mood Aura
 - **Aura Tracking (Mood Tracker)**: A minimalist, private system to log emotional states and notes daily, complete with dynamic visualization statistics. Supports guest local storage and user databases.
-- **Stress Sanctuary (Decompress)**:
-  - *Ambient Sound Mixer*: Layer high-fidelity, playable nature sounds (rain, forest stream, ocean waves, campfire crackle) to create your ideal sanctuary.
-  - *Meditation Timer*: Customizable timers (5, 10, or 20 minutes) for mindfulness sessions.
-  - *4-4-6 Breathing Rhythm*: An organic visual breathing guide to reset the nervous system.
-  - *Thought Journaling*: A private space to unload reflections and journal daily.
-- **Self-Reflective Assessment**: A validated observation questionnaire that estimates emotional strain (anxiety/depression severity) with suggestions on next steps.
-- **Companion AI**: A judgment-free chatbot powered by Groq LLM API for secure, empathetic guidance.
-- **Confidential and Secure**: Support for anonymous guest usage via localStorage and database syncing for authenticated profiles.
+- **Monthly Aura Grid Calendar**: A monthly mood visualization calendar highlighting logged emotion gradients, integrated with a **Sanctuary Insight** analytics engine that summarizes emotional cycles and suggests therapeutic coping actions.
+- **Daily Affirmations**: A positive inspiration header that rotates 31 unique, non-repeating mindful intentions.
+- **Dynamic Milestone Badges**: Progress indicators that award wellness badges (e.g. *First Light*, *Inner Awareness*, *Reflection Explorer*, *Focus Anchor*, *Focused Intent*) based on your logs and journal activity.
+
+### 🧘 Stress Sanctuary (Decompress)
+- **Breathing & Meditation**: Interactive custom timers and a visual 4-4-6 paced breathing guide to regulate the autonomic nervous system.
+- **Custom Soundscape Mixer**: Layer tranquil nature elements (Rain, Campfire, Waves) or paste your own **YouTube or Spotify** playlists to run custom focus tracks inside the player.
+- **Mindful Focus Checklist**: A built-in tasks and goals to-do tracker to ease mental load and structure daily intentions.
+- **Thought Journaling**: A private reflection space supporting live edits and secure deletion of past entries.
+
+### 🤝 Support & Connection
+- **Support Community Forum**: A non-toxic support network space to publish posts, write replies, like entries, and filter post categories (general support vs. verified therapist advice).
+- **Therapist Directory**: An interactive search index of certified clinical psychologists and coaches, fetched dynamically from MongoDB. Includes an online **Callback Scheduling Form** to book therapy inquiry callbacks.
+- **Companion AI**: A secure, judgment-free conversational chatbot powered by Groq LLM API for empathetic coaching.
+- **UK Password Authentication**: Upgraded login UI with password visibility toggle and strict 8-digit character requirement checks (uppercase, number, special character).
 
 ## Technology Stack
 
