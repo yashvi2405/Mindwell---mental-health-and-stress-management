@@ -1,40 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Sparkles, Heart, Globe, Award, Users, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Shield, Heart, Globe, Award, AlertTriangle, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const About = () => {
-  const teamMembers = [
-    {
-      name: "Dr. Sarah Patel",
-      role: "Clinical Psychologist",
-      bio: "Focuses on evidence-based mental wellness and cognitive harmony.",
-      color: "bg-serene-100/70",
-      textColor: "text-serene-800"
-    },
-    {
-      name: "Yashvi Muchhala",
-      role: "Lead Designer",
-      bio: "Crafting digital sanctuaries that prioritize calm and accessibility.",
-      color: "bg-serene-100/80",
-      textColor: "text-serene-700"
-    },
-    {
-      name: "Dr. Emily Watson",
-      role: "Research lead",
-      bio: "Bridging clinical research with intuitive mindfulness practices.",
-      color: "bg-serene-200/50",
-      textColor: "text-serene-850"
-    },
-    {
-      name: "Tanish Tare",
-      role: "AI Ethics",
-      bio: "Ensuring compassionate and safe AI support for all users.",
-      color: "bg-serene-200/70",
-      textColor: "text-serene-900"
-    }
-  ];
-
   const values = [
     {
       icon: Shield,
@@ -77,7 +46,7 @@ const About = () => {
             <span className="text-serene-700 italic">Mindwell.</span>
           </motion.h1>
           <p className="text-xl md:text-2xl text-serene-750 max-w-3xl mx-auto leading-relaxed font-light">
-            We are a group of designers, engineers, and clinicians dedicated to building the world's most serene digital sanctuary for mental wellness.
+            We are dedicated to building a serene digital sanctuary for mental wellness and personal growth.
           </p>
         </div>
       </section>
@@ -91,19 +60,9 @@ const About = () => {
               <h2 className="text-4xl md:text-5xl font-serif font-bold text-serene-900 mb-8 leading-tight">
                 Democratizing <br /> Tranquility for All.
               </h2>
-              <p className="text-lg text-serene-600 leading-relaxed mb-10">
+              <p className="text-lg text-serene-600 leading-relaxed">
                 Mental health care should be accessible to everyone, yet barriers like cost, stigma, and availability prevent millions from getting the support they need. Mindwell bridges this gap with organic tools.
               </p>
-              <div className="grid grid-cols-2 gap-8">
-                <div>
-                  <h4 className="text-4xl font-serif font-bold text-serene-800 mb-2">50K+</h4>
-                  <p className="text-xs text-serene-400 font-bold uppercase tracking-widest">Lives Touched</p>
-                </div>
-                <div>
-                  <h4 className="text-4xl font-serif font-bold text-serene-800 mb-2">100%</h4>
-                  <p className="text-xs text-serene-400 font-bold uppercase tracking-widest">Encrypted</p>
-                </div>
-              </div>
             </div>
             <div className="relative">
               <div className="rounded-[4rem] overflow-hidden shadow-2xl relative z-10 border border-serene-200/30">
@@ -113,40 +72,12 @@ const About = () => {
                   className="w-full h-[400px] object-cover grayscale-[10%] hover:grayscale-0 transition-all duration-700"
                 />
               </div>
-              <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-serene-700 rounded-full flex items-center justify-center p-8 text-white z-20 shadow-2xl">
-                <p className="text-[10px] font-bold leading-tight uppercase tracking-widest text-center">Boutique <br /> Wellness <br /> Lab.</p>
-              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Team Section */}
-      <section className="py-32 bg-serene-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-20">
-          <h2 className="text-4xl md:text-5xl font-serif font-bold text-serene-900 mb-6 font-serif">Our Guardians</h2>
-          <p className="text-serene-600 max-w-2xl mx-auto">The humans behind the sanctuary, blending technology with deep empathy.</p>
-        </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch">
-            {teamMembers.map((member, index) => (
-              <motion.div 
-                key={index}
-                whileHover={{ y: -10 }}
-                className="bg-white rounded-[3rem] p-10 text-center shadow-xl shadow-serene-900/5 group flex flex-col h-full border border-serene-100"
-              >
-                <div className={`w-24 h-24 ${member.color} rounded-full flex items-center justify-center mx-auto mb-8 transition-transform group-hover:scale-110 shadow-inner`}>
-                  <Users size={36} className={member.textColor} />
-                </div>
-                <h3 className="text-xl font-serif font-bold text-serene-900 mb-1">{member.name}</h3>
-                <p className="text-serene-400 font-bold text-[10px] uppercase tracking-[0.2em] mb-6">{member.role}</p>
-                <p className="text-serene-600 text-sm leading-relaxed italic">{member.bio}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Values Section */}
       <section className="py-32 bg-white rounded-t-[4rem]">

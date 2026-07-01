@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Heart, Activity, Wind, BarChart3, MessageCircle, ArrowRight, Shield, Globe, Award, Sparkles } from 'lucide-react';
+import { Activity, Wind, BarChart3, MessageCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
@@ -294,34 +294,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Trust & Ethics Section */}
-      <section className="py-24 bg-serene-50/30">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-serene-100/50">
-                <Shield size={24} className="text-serene-700" />
-              </div>
-              <h4 className="text-lg font-serif font-bold text-serene-900 mb-2">Private by Design</h4>
-              <p className="text-sm text-serene-600">Your logs are your own. We prioritize encryption and anonymity.</p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-serene-100/50">
-                <Award size={24} className="text-serene-700" />
-              </div>
-              <h4 className="text-lg font-serif font-bold text-serene-900 mb-2">Evidence Based</h4>
-              <p className="text-sm text-serene-600">Tools grounded in psychological research and mindfulness practices.</p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-serene-100/50">
-                <Globe size={24} className="text-serene-700" />
-              </div>
-              <h4 className="text-lg font-serif font-bold text-serene-900 mb-2">Open Access</h4>
-              <p className="text-sm text-serene-600">Mental health tools for everyone, available free of cost.</p>
-            </div>
-          </div>
-        </div>
-      </section>
+
 
       {/* Final Call to Action */}
       <section className="py-32 relative overflow-hidden">

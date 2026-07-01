@@ -5,12 +5,14 @@ import {
   logoutUser,
   getUserProfile,
   updateUserProfile,
+  getTherapists,
 } from '../controllers/userController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 router.post('/', registerUser);
+router.get('/therapists', getTherapists);
 router.post('/auth', authUser);
 router.post('/logout', logoutUser);
 router

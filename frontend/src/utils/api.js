@@ -41,10 +41,10 @@ export const authAPI = {
   },
 
   // Register user
-  register: async (name, email, password) => {
+  register: async (name, email, password, extraData = {}) => {
     return apiRequest('/api/users', {
       method: 'POST',
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ name, email, password, ...extraData }),
     });
   },
 
@@ -67,6 +67,13 @@ export const authAPI = {
     return apiRequest('/api/users/profile', {
       method: 'PUT',
       body: JSON.stringify(userData),
+    });
+  },
+
+  // Get all registered therapists
+  getTherapists: async () => {
+    return apiRequest('/api/users/therapists', {
+      method: 'GET',
     });
   },
 };

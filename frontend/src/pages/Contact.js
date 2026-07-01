@@ -1,47 +1,38 @@
-// pages/Contact.js
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { User, Mail, MessageSquare, Phone, Calendar, Heart, Shield, CheckCircle } from 'lucide-react';
+import { authAPI } from '../utils/api';
 
-const therapists = [
-  {
-    id: 1,
-    name: 'Dr. Sarah Jenkins',
-    title: 'Clinical Psychologist, CBT Specialist',
-    bio: 'Dedicated to helping individuals navigate life transitions, severe stress, and chronic anxiety through evidence-based cognitive strategies.',
-    specialties: ['CBT', 'Anxiety & Panic', 'Burnout Prevention'],
-    availability: 'Mon - Thu, 9 AM - 5 PM',
-    photo: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=300'
-  },
-  {
-    id: 2,
-    name: 'Marcus Vance, LMFT',
-    title: 'Mindfulness & Relationship Counselor',
-    bio: 'Specializes in somatic tracking, deep grounding therapy, and restoring peace within interpersonal connections and family environments.',
-    specialties: ['Mindfulness Integration', 'Somatic Guidance', 'Couples Therapy'],
-    availability: 'Tue - Fri, 10 AM - 7 PM',
-    photo: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=300'
-  },
-  {
-    id: 3,
-    name: 'Elena Rostova, LCSW',
-    title: 'Trauma & Resilience Coach',
-    bio: 'Helps clients discover internal anchors, reframe stress triggers, and cultivate lasting resilience in a quiet, empathetic setting.',
-    specialties: ['PTSD Recovery', 'Stress Tolerance', 'Self-Compassion'],
-    availability: 'Wed - Sat, 11 AM - 6 PM',
-    photo: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=300'
-  }
-];
+// pages/Contact.js
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { User, Mail, MessageSquare, Calendar, CheckCircle } from 'lucide-react';
 
 const Contact = () => {
+  const [therapistsList, setTherapistsList] = useState([]);
+  const [loadingTherapists, setLoadingTherapists] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    therapist: 'Dr. Sarah Jenkins',
+    therapist: '',
     message: ''
   });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchTherapists = async () => {
+      try {
+        const data = await authAPI.getTherapists();
+        setTherapistsList(data || []);
+        if (data && data.length > 0) {
+          setFormData(prev => ({ ...prev, therapist: data[0].name }));
+        }
+      } catch (err) {
+        console.error('Error fetching therapists:', err);
+      } finally {
+        setLoadingTherapists(false);
+      }
+    };
+    fetchTherapists();
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -59,7 +50,7 @@ const Contact = () => {
     setFormData({
       name: '',
       email: '',
-      therapist: 'Dr. Sarah Jenkins',
+      therapist: therapistsList[0]?.name || '',
       message: ''
     });
     setSubmitted(false);
@@ -84,38 +75,51 @@ const Contact = () => {
           <div className="lg:col-span-7 space-y-6">
             <h3 className="text-2xl font-serif font-bold text-serene-900 mb-6">Verified Specialists</h3>
             
-            {therapists.map((t) => (
-              <motion.div
-                key={t.id}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-[2.5rem] p-6 shadow-md border border-serene-100 flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6 hover:shadow-lg transition-all"
-              >
-                <img
-                  src={t.photo}
-                  alt={t.name}
-                  className="w-24 h-24 md:w-28 md:h-28 rounded-2xl object-cover object-center border border-serene-50/50 shadow-inner flex-shrink-0"
-                />
-                <div className="flex-1">
-                  <h4 className="font-serif font-bold text-serene-900 text-lg mb-1">{t.name}</h4>
-                  <p className="text-xs text-serene-700 font-bold mb-3">{t.title}</p>
-                  <p className="text-xs text-serene-500 leading-relaxed mb-4">{t.bio}</p>
-                  
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {t.specialties.map(s => (
-                      <span key={s} className="px-2.5 py-1 bg-serene-50 text-[10px] text-serene-750 font-bold rounded-full">
-                        {s}
-                      </span>
-                    ))}
-                  </div>
+            {loadingTherapists ? (
+              <div className="text-center py-10">
+                <p className="text-serene-400 text-sm">Loading certified specialists...</p>
+              </div>
+            ) : therapistsList.length > 0 ? (
+              therapistsList.map((t) => (
+                <motion.div
+                  key={t._id}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-[2.5rem] p-6 shadow-md border border-serene-100 flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6 hover:shadow-lg transition-all"
+                >
+                  <img
+                    src={t.photo || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=300'}
+                    alt={t.name}
+                    className="w-24 h-24 md:w-28 md:h-28 rounded-2xl object-cover object-center border border-serene-50/50 shadow-inner flex-shrink-0"
+                  />
+                  <div className="flex-1">
+                    <h4 className="font-serif font-bold text-serene-900 text-lg mb-1">{t.name}</h4>
+                    <p className="text-xs text-serene-700 font-bold mb-3">{t.title}</p>
+                    <p className="text-xs text-serene-500 leading-relaxed mb-4">{t.bio}</p>
+                    
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {t.specialties && t.specialties.map(s => (
+                        <span key={s} className="px-2.5 py-1 bg-serene-50 text-[10px] text-serene-750 font-bold rounded-full">
+                          {s}
+                        </span>
+                      ))}
+                    </div>
 
-                  <div className="flex items-center text-[10px] font-bold text-serene-400">
-                    <Calendar size={12} className="mr-1" />
-                    <span>Availability: {t.availability}</span>
+                    <div className="flex items-center text-[10px] font-bold text-serene-400">
+                      <Calendar size={12} className="mr-1" />
+                      <span>Availability: {t.availability}</span>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              ))
+            ) : (
+              <div className="bg-white rounded-[2.5rem] p-10 text-center border border-serene-100 shadow-md">
+                <p className="text-serene-600 font-light leading-relaxed text-sm">
+                  No verified specialists are currently registered in our database directory. <br />
+                  If you are a certified therapist, please register an account to join our sanctuary directory.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Callback Request Form Card */}
@@ -182,9 +186,13 @@ const Contact = () => {
                       onChange={(e) => setFormData({ ...formData, therapist: e.target.value })}
                       className="w-full px-4 py-3.5 bg-serene-50/50 border border-serene-100 rounded-2xl text-xs focus:ring-4 focus:ring-serene-500/10 text-serene-750"
                     >
-                      {therapists.map(t => (
-                        <option key={t.name} value={t.name}>{t.name}</option>
-                      ))}
+                      {therapistsList.length > 0 ? (
+                        therapistsList.map(t => (
+                          <option key={t.name} value={t.name}>{t.name}</option>
+                        ))
+                      ) : (
+                        <option value="">No specialists registered</option>
+                      )}
                     </select>
                   </div>
 

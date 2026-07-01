@@ -11,6 +11,11 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isTherapist, setIsTherapist] = useState(false);
+  const [title, setTitle] = useState('');
+  const [bio, setBio] = useState('');
+  const [specialties, setSpecialties] = useState('');
+  const [availability, setAvailability] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -45,7 +50,10 @@ const Login = () => {
     try {
       let userData;
       if (isSignUp) {
-        userData = await authAPI.register(name, email, password);
+        const extraData = isTherapist
+          ? { role: 'therapist', title, bio, specialties, availability }
+          : { role: 'user' };
+        userData = await authAPI.register(name, email, password, extraData);
       } else {
         userData = await authAPI.login(email, password);
       }
@@ -174,6 +182,70 @@ const Login = () => {
                       <span className={`w-2 h-2 rounded-full ${/[^A-Za-z0-9]/.test(password) ? 'bg-emerald-500' : 'bg-red-400'}`} />
                       <span>Special character</span>
                     </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {isSignUp && (
+                <div className="flex items-center space-x-3 py-2 px-1">
+                  <input
+                    type="checkbox"
+                    id="isTherapist"
+                    className="w-5 h-5 rounded border-serene-200 text-serene-700 focus:ring-serene-500/30"
+                    checked={isTherapist}
+                    onChange={(e) => setIsTherapist(e.target.checked)}
+                  />
+                  <label htmlFor="isTherapist" className="text-sm font-medium text-serene-700 cursor-pointer select-none">
+                    Register as a Therapist / Counselor
+                  </label>
+                </div>
+              )}
+
+              {isSignUp && isTherapist && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-4 pt-2 border-t border-serene-100"
+                >
+                  <div>
+                    <input
+                      type="text"
+                      required={isTherapist}
+                      className="w-full px-4 py-4 bg-serene-50 border-none rounded-2xl focus:ring-4 focus:ring-serene-500/10 transition-all text-serene-900 placeholder-serene-300"
+                      placeholder="Professional Title (e.g. Clinical Psychologist)"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="text"
+                      required={isTherapist}
+                      className="w-full px-4 py-4 bg-serene-50 border-none rounded-2xl focus:ring-4 focus:ring-serene-500/10 transition-all text-serene-900 placeholder-serene-300"
+                      placeholder="Specialties (comma-separated, e.g. CBT, Anxiety)"
+                      value={specialties}
+                      onChange={(e) => setSpecialties(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="text"
+                      required={isTherapist}
+                      className="w-full px-4 py-4 bg-serene-50 border-none rounded-2xl focus:ring-4 focus:ring-serene-500/10 transition-all text-serene-900 placeholder-serene-300"
+                      placeholder="Availability (e.g. Mon - Fri, 9 AM - 5 PM)"
+                      value={availability}
+                      onChange={(e) => setAvailability(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <textarea
+                      required={isTherapist}
+                      rows={3}
+                      className="w-full px-4 py-4 bg-serene-50 border-none rounded-2xl focus:ring-4 focus:ring-serene-500/10 transition-all text-serene-900 placeholder-serene-300 resize-none"
+                      placeholder="Professional Bio / Philosophy"
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                    />
                   </div>
                 </motion.div>
               )}
