@@ -50,7 +50,7 @@ Keep responses conversational, warm, and hope-focused. You're here to support th
           content: prompt
         }
       ],
-      model: "llama-3.3-70b-versatile", // Updated model - fast and capable
+      model: "openai/gpt-oss-120b", // Updated model - fast and capable
       temperature: 0.8,
       max_tokens: 1500,
       top_p: 0.95,
